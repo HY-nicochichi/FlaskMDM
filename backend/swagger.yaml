@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: Flask MDM API
+  version: 1.0.0
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+  - name: Manager API
+  - name: Enterprise API
+paths:
+  /manager/:
+    post:
+      tags:
+        - Manager API
+      summary: 管理者アカウントを作成する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: taro@email.com
+                password:
+                  type: string
+                  example: Taro1234
+              required:
+                - id
+                - password
+      responses:
+        '200':
+          description: 成功
+    get:
+      tags:
+        - Manager API
+      summary: 管理者情報を取得する
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: taro@email.com
+                  enterprises:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: abcde12345
+                        name:
+                          type: string
+                          example: 太郎の組織1
+    delete:
+      tags:
+        - Manager API
+      summary: 管理者アカウントを削除する
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+  /manager/access_token:
+    post:
+      tags:
+        - Manager API
+      summary: JWTトークンを作成する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: taro@email.com
+                password:
+                  type: string
+                  example: Taro1234
+              required:
+                - id
+                - password
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: Json.Web.Token
+  /manager/google_signup:
+    get:
+      tags:
+        - Manager API
+      summary: Managed Google Play の登録URLを取得する
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  google_signup:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        example: https://enterprise.google.com/signup/android/...
+                      name:
+                        type: string
+                        example: signupUrls/...
+  /enterprise/:
+    post:
+      tags:
+        - Enterprise API
+      summary: エンタープライズを作成する
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signup_url_name:
+                  type: string
+                  example: signupUrls/...
+                enterprise_token:
+                  type: string
+                  example: xxxxxxxxxx
+              required:
+                - signup_url_name
+                - enterprise_token
+      responses:
+        '200':
+          description: 成功
+  /enterprise/{id}:
+    get:
+      tags:
+        - Enterprise API
+      summary: 特定のエンタープライズ情報を取得する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: 太郎の組織1
+                  enroll_qrcode:
+                    type: string
+                  devices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: abcde12345
+                        model:
+                          type: string
+                          example: Pixel 6a
+                        serial_number:
+                          type: string
+                          example: ABCDE12345
+                        policy:
+                          type: string
+                          example: taro_policy_1
+                  policies:
+                    type: array
+                    items:
+                      type: string
+                      example: taro_policy_1
+    delete:
+      tags:
+        - Enterprise API
+      summary: エンタープライズを削除する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+  /enterprise/{enterprise_id}/policy/{id}:
+    patch:
+      tags:
+        - Enterprise API
+      summary: ポリシーを作成または更新する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enterprise_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policy:
+                  type: object
+                  example:
+                    applications:
+                      - packageName: com.instagram.android
+                        installType: FORCE_INSTALLED
+              required:
+                - policy
+      responses:
+        '200':
+          description: 成功
+    get:
+      tags:
+        - Enterprise API
+      summary: 特定のポリシー情報を取得する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enterprise_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  policy:
+                    type: object
+                    example:
+                      applications:
+                        - packageName: com.instagram.android
+                          installType: FORCE_INSTALLED
+    delete:
+      tags:
+        - Enterprise API
+      summary: ポリシーを削除する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enterprise_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+  /enterprise/{enterprise_id}/device/{id}:
+    patch:
+      tags:
+        - Enterprise API
+      summary: デバイスの適用ポリシーを更新する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enterprise_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policy_id:
+                  type: string
+                  example: taro_policy_1
+              required:
+                - policy_id
+      responses:
+        '200':
+          description: 成功
+    delete:
+      tags:
+        - Enterprise API
+      summary: デバイスを削除する
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: enterprise_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
