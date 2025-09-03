@@ -1,0 +1,31 @@
+services:
+
+  database:
+    container_name: flaskmdm-database
+    build: ./database
+    volumes: [volume:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres]
+      interval: 2s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  backend:
+    container_name: flaskmdm-backend
+    build: ./backend
+    ports: [5000:5000]
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    container_name: flaskmdm-frontend
+    build: ./frontend
+    ports: [8080:8080]
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  volume:
