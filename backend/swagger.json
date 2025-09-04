@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Flask MDM API",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "components": {
     "securitySchemes": {
@@ -478,7 +478,7 @@
         "tags": [
           "Enterprise API"
         ],
-        "summary": "デバイス情報を更新する",
+        "summary": "デバイスの適用ポリシーを更新する",
         "security": [
           { "bearerAuth": [] }
         ],

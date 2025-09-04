@@ -28,6 +28,28 @@ interface Enterprise {
   devices: Device[]
 }
 
+interface PasswordPolicy {
+  passwordMinimumLength: number
+  passwordQuality: 'NUMERIC'|'ALPHABETIC'|'ALPHANUMERIC'
+  maximumFailedPasswordsForWipe: number
+}
+
+interface Policy {
+  applications: {
+    packageName: string
+    installType: 'FORCE_INSTALLED'
+  }[]
+  passwordPolicies: PasswordPolicy[]
+  cameraAccess: 'CAMERA_ACCESS_DISABLED'|'CAMERA_ACCESS_USER_CHOICE'
+  systemUpdate: {
+    type: 'SYSTEM_UPDATE_TYPE_UNSPECIFIED'|'AUTOMATIC'
+  },
+  screenCaptureDisabled: boolean
+  smsDisabled: boolean
+  bluetoothDisabled: boolean
+  factoryResetDisabled: boolean
+}
+
 export type {
-  Resp, Alert, Manager, Enterprise, Device
+  Resp, Alert, Manager, Enterprise, Device, PasswordPolicy, Policy
 }
