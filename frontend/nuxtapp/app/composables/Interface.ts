@@ -28,28 +28,50 @@ interface Enterprise {
   devices: Device[]
 }
 
+interface ApplicationPolicy {
+  packageName: string
+  installType: 'FORCE_INSTALLED'
+}
+
 interface PasswordPolicy {
   passwordMinimumLength: number
   passwordQuality: 'NUMERIC'|'ALPHABETIC'|'ALPHANUMERIC'
   maximumFailedPasswordsForWipe: number
 }
 
+interface DeviceConnectionPolicy {
+  usbDataAccess: 'DISALLOW_USB_FILE_TRANSFER'|'ALLOW_USB_DATA_TRANSFER'
+  tetheringSettings: 'DISALLOW_ALL_TETHERING'|'ALLOW_ALL_TETHERING'
+  wifiSsidPolicy: {
+    wifiSsidPolicyType: 'WIFI_SSID_DENYLIST'|'WIFI_SSID_ALLOWLIST'
+    wifiSsids: {
+      wifiSsid: string
+    }[]
+  }
+  bluetoothSharing: 'BLUETOOTH_SHARING_DISALLOWED'|'BLUETOOTH_SHARING_ALLOWED'
+}
+
 interface Policy {
-  applications: {
-    packageName: string
-    installType: 'FORCE_INSTALLED'
-  }[]
+  applications: ApplicationPolicy[]
   passwordPolicies: PasswordPolicy[]
   cameraAccess: 'CAMERA_ACCESS_DISABLED'|'CAMERA_ACCESS_USER_CHOICE'
+  microphoneAccess: 'MICROPHONE_ACCESS_DISABLED'|'MICROPHONE_ACCESS_USER_CHOICE'
   systemUpdate: {
     type: 'SYSTEM_UPDATE_TYPE_UNSPECIFIED'|'AUTOMATIC'
-  },
+  }
   screenCaptureDisabled: boolean
   smsDisabled: boolean
   bluetoothDisabled: boolean
   factoryResetDisabled: boolean
+  modifyAccountsDisabled: boolean
+  autoDateAndTimeZone: 'AUTO_DATE_AND_TIME_ZONE_USER_CHOICE'|'AUTO_DATE_AND_TIME_ZONE_ENFORCED'
+  deviceConnectivityManagement: DeviceConnectionPolicy
+  advancedSecurityOverrides: {
+    developerSettings: 'DEVELOPER_SETTINGS_DISABLED'|'DEVELOPER_SETTINGS_ALLOWED'
+  }
 }
 
 export type {
-  Resp, Alert, Manager, Enterprise, Device, PasswordPolicy, Policy
+  Resp, Alert, Manager, Enterprise, Device,
+  ApplicationPolicy, PasswordPolicy, DeviceConnectionPolicy, Policy
 }

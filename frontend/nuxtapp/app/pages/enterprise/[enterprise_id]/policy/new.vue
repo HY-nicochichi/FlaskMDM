@@ -25,19 +25,56 @@
       }
     ],
     cameraAccess: 'CAMERA_ACCESS_DISABLED',
+    microphoneAccess: 'MICROPHONE_ACCESS_DISABLED',
     systemUpdate: {
       type: 'SYSTEM_UPDATE_TYPE_UNSPECIFIED'
     },
     screenCaptureDisabled: true,
     smsDisabled: true,
     bluetoothDisabled: true,
-    factoryResetDisabled: true
+    factoryResetDisabled: true,
+    modifyAccountsDisabled: true,
+    autoDateAndTimeZone: 'AUTO_DATE_AND_TIME_ZONE_USER_CHOICE',
+    deviceConnectivityManagement: {
+      usbDataAccess: 'DISALLOW_USB_FILE_TRANSFER',
+      tetheringSettings: 'DISALLOW_ALL_TETHERING',
+      wifiSsidPolicy: {
+        wifiSsidPolicyType: 'WIFI_SSID_DENYLIST',
+        wifiSsids: [] as {wifiSsid: string}[]
+      },
+      bluetoothSharing: 'BLUETOOTH_SHARING_DISALLOWED'
+    },
+    advancedSecurityOverrides: {
+      developerSettings: 'DEVELOPER_SETTINGS_DISABLED'
+    }
+  })
+
+  const isSsidRestrictionEnabled = computed({
+    get: () => policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType === 'WIFI_SSID_ALLOWLIST',
+    set: (value: boolean) => {
+      policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType = value ? 'WIFI_SSID_ALLOWLIST' : 'WIFI_SSID_DENYLIST'
+      policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids = value ? [{wifiSsid: ''}] : []
+    }
   })
 
   const isCameraEnabled = computed({
     get: () => policyData.value.cameraAccess === 'CAMERA_ACCESS_USER_CHOICE',
     set: (value: boolean) => {
       policyData.value.cameraAccess = value ? 'CAMERA_ACCESS_USER_CHOICE' : 'CAMERA_ACCESS_DISABLED'
+    }
+  })
+
+  const isScreenShotEnabled = computed({
+    get: () => !policyData.value.screenCaptureDisabled,
+    set: (value: boolean) => {
+      policyData.value.screenCaptureDisabled = !value
+    }
+  })
+
+  const isMicrophoneEnabled = computed({
+    get: () => policyData.value.microphoneAccess === 'MICROPHONE_ACCESS_USER_CHOICE',
+    set: (value: boolean) => {
+      policyData.value.microphoneAccess = value ? 'MICROPHONE_ACCESS_USER_CHOICE' : 'MICROPHONE_ACCESS_DISABLED'
     }
   })
 
@@ -48,10 +85,17 @@
     }
   })
 
-  const isScreenShotEnabled = computed({
-    get: () => !policyData.value.screenCaptureDisabled,
+  const isBluetoothShareEnabled = computed({
+    get: () => policyData.value.deviceConnectivityManagement.bluetoothSharing === 'BLUETOOTH_SHARING_ALLOWED',
     set: (value: boolean) => {
-      policyData.value.screenCaptureDisabled = !value
+      policyData.value.deviceConnectivityManagement.bluetoothSharing = value ? 'BLUETOOTH_SHARING_ALLOWED' : 'BLUETOOTH_SHARING_DISALLOWED'
+    }
+  })
+
+  const isTetheringEnabled = computed({
+    get: () => policyData.value.deviceConnectivityManagement.tetheringSettings === 'ALLOW_ALL_TETHERING',
+    set: (value: boolean) => {
+      policyData.value.deviceConnectivityManagement.tetheringSettings = value ? 'ALLOW_ALL_TETHERING' : 'DISALLOW_ALL_TETHERING'
     }
   })
 
@@ -69,10 +113,38 @@
     }
   })
 
+  const isModifyAccountsEnabled = computed({
+    get: () => !policyData.value.modifyAccountsDisabled,
+    set: (value: boolean) => {
+      policyData.value.modifyAccountsDisabled = !value
+    }
+  })
+
   const isSystemAutoUpdateEnabled = computed({
     get: () => policyData.value.systemUpdate.type === 'AUTOMATIC',
     set: (value: boolean) => {
       policyData.value.systemUpdate.type = value ? 'AUTOMATIC' : 'SYSTEM_UPDATE_TYPE_UNSPECIFIED'
+    }
+  })
+
+  const isAutoDateEnabled = computed({
+    get: () => policyData.value.autoDateAndTimeZone === 'AUTO_DATE_AND_TIME_ZONE_ENFORCED',
+    set: (value: boolean) => {
+      policyData.value.autoDateAndTimeZone = value ? 'AUTO_DATE_AND_TIME_ZONE_ENFORCED' : 'AUTO_DATE_AND_TIME_ZONE_USER_CHOICE'
+    }
+  })
+
+  const isDeveloperModeEnabled = computed({
+    get: () => policyData.value.advancedSecurityOverrides.developerSettings === 'DEVELOPER_SETTINGS_ALLOWED',
+    set: (value: boolean) => {
+      policyData.value.advancedSecurityOverrides.developerSettings = value ? 'DEVELOPER_SETTINGS_ALLOWED' : 'DEVELOPER_SETTINGS_DISABLED'
+    }
+  })
+
+  const isUsbFileAccessEnabled = computed({
+    get: () => policyData.value.deviceConnectivityManagement.usbDataAccess === 'ALLOW_USB_DATA_TRANSFER',
+    set: (value: boolean) => {
+      policyData.value.deviceConnectivityManagement.usbDataAccess = value ? 'ALLOW_USB_DATA_TRANSFER' : 'DISALLOW_USB_FILE_TRANSFER'
     }
   })
 
@@ -133,33 +205,6 @@
       </div>
     </div>
     <div class="mb-4">
-      <h5 class="fw-bolder">各種機能の有効/無効</h5>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="cameraToggle" v-model="isCameraEnabled">
-        <label class="form-check-label" for="cameraToggle">カメラ</label>
-      </div>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="bluetoothToggle" v-model="isBluetoothEnabled">
-        <label class="form-check-label" for="bluetoothToggle">Bluetooth</label>
-      </div>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="screenCaptureToggle" v-model="isScreenShotEnabled">
-        <label class="form-check-label" for="screenCaptureToggle">スクリーンショット</label>
-      </div>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="smsToggle" v-model="isSmsEnabled">
-        <label class="form-check-label" for="smsToggle">SMS</label>
-      </div>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="factoryResetToggle" v-model="isFactoryResetEnabled">
-        <label class="form-check-label" for="factoryResetToggle">デバイス初期化</label>
-      </div>
-      <div class="form-check form-switch my-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="systemUpdateToggle" v-model="isSystemAutoUpdateEnabled">
-        <label class="form-check-label" for="systemUpdateToggle">OS自動更新</label>
-      </div>
-    </div>
-    <div class="mb-4">
       <h5 class="fw-bolder">パスワード</h5>
       <div class="mb-3">
         <label for="minLength" class="form-label">最小文字数 (4-16)</label>
@@ -192,11 +237,100 @@
         </select>
       </div>
     </div>
+    <div class="mb-4">
+      <h5 class="fw-bolder">Wi-Fi接続設定</h5>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="ssidRestrictionToggle" v-model="isSsidRestrictionEnabled">
+        <label class="form-check-label" for="ssidRestrictionToggle">SSID制限</label>
+      </div>
+      <div v-if="policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType === 'WIFI_SSID_ALLOWLIST'" class="mt-3">
+        <label for="wifiSsids" class="form-label fw-bolder">
+          接続許可SSID
+        </label>
+        <div v-for="(ssid, index) in policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids" class="d-flex align-items-center mb-2">
+          <input type="text" class="form-control flex-grow-1" v-model="ssid.wifiSsid" placeholder="許可したいSSID">
+          <button
+            class="btn btn-danger btn-sm ms-2 flex-shrink-0"
+            @click="policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids.splice(index, 1)"
+          >
+            削除
+          </button>
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary btn-sm mt-2"
+            @click="policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids.push({wifiSsid: ''})"
+          >
+            ＋ 追加
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mb-4">
+      <h5 class="fw-bolder">各種機能の有効/無効</h5>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="cameraToggle" v-model="isCameraEnabled">
+        <label class="form-check-label" for="cameraToggle">カメラ</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="screenCaptureToggle" v-model="isScreenShotEnabled">
+        <label class="form-check-label" for="screenCaptureToggle">スクリーンショット</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="microphoneToggle" v-model="isMicrophoneEnabled">
+        <label class="form-check-label" for="microphoneToggle">マイク</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="bluetoothToggle" v-model="isBluetoothEnabled">
+        <label class="form-check-label" for="bluetoothToggle">Bluetooth</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="bluetoothShareToggle" v-model="isBluetoothShareEnabled">
+        <label class="form-check-label" for="bluetoothShareToggle">Bluetooth共有</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="tetheringToggle" v-model="isTetheringEnabled">
+        <label class="form-check-label" for="tetheringToggle">テザリング</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="smsToggle" v-model="isSmsEnabled">
+        <label class="form-check-label" for="smsToggle">SMS</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="factoryResetToggle" v-model="isFactoryResetEnabled">
+        <label class="form-check-label" for="factoryResetToggle">デバイス初期化</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="modifyAccountsToggle" v-model="isModifyAccountsEnabled">
+        <label class="form-check-label" for="modifyAccountsToggle">アカウント追加/削除</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="systemUpdateToggle" v-model="isSystemAutoUpdateEnabled">
+        <label class="form-check-label" for="systemUpdateToggle">OS自動更新</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="autoDateToggle" v-model="isAutoDateEnabled">
+        <label class="form-check-label" for="autoDateToggle">時刻自動設定</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="developerModeToggle" v-model="isDeveloperModeEnabled">
+        <label class="form-check-label" for="developerModeToggle">開発者オプション</label>
+      </div>
+      <div class="form-check form-switch my-2">
+        <input class="form-check-input" type="checkbox" role="switch" id="usbFileToggle" v-model="isUsbFileAccessEnabled">
+        <label class="form-check-label" for="usbFileToggle">USBファイル送受信</label>
+      </div>
+    </div>
     <br>
     <button type="submit" class="btn btn-primary me-3"
-      :disabled="!/^[a-z0-9_]+$/.test(policy_id) || !policyData.applications.every(
-        application => /^[a-z0-9.-]+$/.test(application.packageName)
-      )"
+      :disabled="
+        !/^[a-z0-9_]+$/.test(policy_id) || 
+        !policyData.applications.every(
+          application => /^[a-z0-9.-]+$/.test(application.packageName)
+        ) || 
+        !policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids.every(
+          ({wifiSsid: value}) => (/^[ -~]+$/.test(value) && value.length < 33)
+        )
+      "
       @click="tryCreatePolicy"
     >
       新規作成
