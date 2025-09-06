@@ -29,7 +29,14 @@ def create_enterprise():
     id = enterprise['name'].split('/')[-1]
     amapi_client.enterprises().policies().patch(
         name = f'enterprises/{id}/policies/default',
-        body = {}
+        body = {
+            'applications': [
+                {
+                    'packageName': 'com.android.chrome',
+                    'installType': 'FORCE_INSTALLED'
+                }
+            ]
+        }
     ).execute()
     enroll_qrcode = amapi_client.enterprises().enrollmentTokens().create(
         parent = f'enterprises/{id}',

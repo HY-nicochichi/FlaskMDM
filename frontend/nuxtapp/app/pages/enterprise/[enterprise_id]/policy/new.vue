@@ -10,10 +10,10 @@
 
   const policy_id = ref('')
 
-  const policyData = ref({
+  const policyData: Ref<Policy> = ref({
     applications: [
       {
-        packageName: '',
+        packageName: 'com.android.chrome',
         installType: 'FORCE_INSTALLED'
       }
     ],
@@ -48,12 +48,40 @@
       developerSettings: 'DEVELOPER_SETTINGS_DISABLED'
     }
   })
+  
+  const tempURLAllowlist: Ref<string[]|null> = ref(null)
+  const tempWifiSsids: Ref<{wifiSsid: string}[]|null> = ref(null)
+
+  const isSiteRestrictionEnabled = computed({
+    get: () => (policyData.value.applications[0] as ApplicationPolicy).managedConfiguration !== undefined,
+    set: (value: boolean) => {
+      if (value) {
+        (policyData.value.applications[0] as ApplicationPolicy).managedConfiguration = {
+          URLBlocklist: ['*'],
+          URLAllowlist: tempURLAllowlist.value ?? ['']
+        }
+        tempURLAllowlist.value = null
+      }
+      else {
+        tempURLAllowlist.value = (
+          policyData.value.applications[0] as ApplicationPolicy
+        ).managedConfiguration?.URLAllowlist ?? []
+        delete (policyData.value.applications[0] as ApplicationPolicy).managedConfiguration
+      }
+    }
+  })
 
   const isSsidRestrictionEnabled = computed({
     get: () => policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType === 'WIFI_SSID_ALLOWLIST',
     set: (value: boolean) => {
       policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType = value ? 'WIFI_SSID_ALLOWLIST' : 'WIFI_SSID_DENYLIST'
-      policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids = value ? [{wifiSsid: ''}] : []
+      if (value) {
+        policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids = tempWifiSsids.value ?? [{wifiSsid: ''}]
+        tempWifiSsids.value = null
+      } else {
+        tempWifiSsids.value = policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids
+        policyData.value.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids = []
+      }
     }
   })
 
@@ -185,14 +213,51 @@
           でアプリを検索
         </span>
       </label>
-      <div v-for="(application, index) in policyData.applications" class="d-flex align-items-center mb-2">
-        <input type="text" class="form-control flex-grow-1" v-model="application.packageName" placeholder="アプリのURLの?id=以降を貼り付け">
-        <button
-          class="btn btn-danger btn-sm ms-2 flex-shrink-0"
-          @click="policyData.applications.splice(index, 1)"
-        >
-          削除
-        </button>
+      <div v-for="(application, index) in policyData.applications" class="mb-2">
+        <div v-if="index === 0">
+          <div class="d-flex align-items-center">
+            <input type="text" class="form-control flex-grow-1" :value="application.packageName" disabled>
+            <button class="btn btn-danger btn-sm ms-2 flex-shrink-0" disabled>
+              削除
+            </button>
+          </div>
+          <div class="form-check form-switch my-2 ms-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="siteRestrictionToggle" v-model="isSiteRestrictionEnabled">
+            <label class="form-check-label" for="siteRestrictionToggle">WEBサイト制限</label>
+          </div>
+          <div v-if="application.managedConfiguration !== undefined" class="ms-3">
+            <label for="wifiSsids" class="form-label fw-bolder">閲覧許可サイト</label>
+            <div v-for="(domain, index) in application.managedConfiguration.URLAllowlist" class="d-flex align-items-center mb-2">
+              <input type="text" class="form-control flex-grow-1"
+                v-model="application.managedConfiguration.URLAllowlist[index]" placeholder="https://allowed.site.domain"
+              >
+              <button
+                class="btn btn-danger btn-sm ms-2 flex-shrink-0"
+                @click="application.managedConfiguration.URLAllowlist.splice(index, 1)"
+              >
+                削除
+              </button>
+            </div>
+            <div>
+              <button type="button" class="btn btn-primary btn-sm my-2"
+                @click="application.managedConfiguration.URLAllowlist.push('')"
+              >
+                ＋ 追加
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-else class="d-flex align-items-center">
+          <input type="text" class="form-control flex-grow-1"
+            v-model="application.packageName" placeholder="アプリのURLの?id=以降を貼り付け"
+          >
+          <button
+            class="btn btn-danger btn-sm ms-2 flex-shrink-0"
+            @click="policyData.applications.splice(index, 1)"
+          >
+            削除
+          </button>
+        </div>
       </div>
       <div>
         <button type="button" class="btn btn-primary btn-sm mt-2"
@@ -244,9 +309,7 @@
         <label class="form-check-label" for="ssidRestrictionToggle">SSID制限</label>
       </div>
       <div v-if="policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsidPolicyType === 'WIFI_SSID_ALLOWLIST'" class="mt-3">
-        <label for="wifiSsids" class="form-label fw-bolder">
-          接続許可SSID
-        </label>
+        <label for="wifiSsids" class="form-label fw-bolder">接続許可SSID</label>
         <div v-for="(ssid, index) in policyData.deviceConnectivityManagement.wifiSsidPolicy.wifiSsids" class="d-flex align-items-center mb-2">
           <input type="text" class="form-control flex-grow-1" v-model="ssid.wifiSsid" placeholder="許可したいSSID">
           <button
@@ -324,6 +387,12 @@
     <button type="submit" class="btn btn-primary me-3"
       :disabled="
         !/^[a-z0-9_]+$/.test(policy_id) || 
+        !(
+          (policyData.applications[0] as ApplicationPolicy).managedConfiguration === undefined ||
+          (policyData.applications[0] as ApplicationPolicy).managedConfiguration?.URLAllowlist.every(
+            domain => /^[a-zA-Z0-9.:/-]+$/.test(domain)
+          )
+        ) ||
         !policyData.applications.every(
           application => /^[a-z0-9.-]+$/.test(application.packageName)
         ) || 

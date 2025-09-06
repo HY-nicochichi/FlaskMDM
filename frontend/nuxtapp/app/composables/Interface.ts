@@ -31,6 +31,10 @@ interface Enterprise {
 interface ApplicationPolicy {
   packageName: string
   installType: 'FORCE_INSTALLED'
+  managedConfiguration?: {
+    URLBlocklist: ['*'],
+    URLAllowlist: string[]
+  }
 }
 
 interface PasswordPolicy {
